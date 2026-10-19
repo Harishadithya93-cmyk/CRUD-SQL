@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      target: production
     ports:
       - "3000:3000"
     environment:
@@ -8,6 +10,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   db:
     image: postgres:16
