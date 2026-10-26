@@ -1,0 +1,48 @@
+# Notes app: Deployment + Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notes
+  template:
+    metadata:
+      labels:
+        app: notes
+    spec:
+      containers:
+        - name: notes
+          image: notes-app:1.0
+          imagePullPolicy: Never   # use the image loaded with: minikube image load
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: postgres://notes_user:notes_pass@db:5432/notesdb
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:             # HPA needs a CPU request to calculate %
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notes
+spec:
+  type: NodePort
+  selector:
+    app: notes
+  ports:
+    - port: 80
+      targetPort: 3000
